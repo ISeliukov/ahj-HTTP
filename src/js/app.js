@@ -24,8 +24,53 @@ const modalDelete = document.querySelector('.modal_delete');
 const modalEdit = document.querySelector('.modal_edit');
 //console.log('modalEdit', modalEdit);
 
+const closeBtn = modalEdit.querySelector('.cansel');
+closeBtn.addEventListener('click', () => {
+  //    console.log('close');
+  modalEdit.style.display = 'none';
+});
+
 const closeBtnModalAdd = document.querySelector('.close');
 //console.log(modalAdd);
+
+const xhr_edit = new XMLHttpRequest();
+let id_edit = 0;
+
+const updateForm = document.querySelector('.update-form');
+const updatehandler = updateForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const body = new FormData(updateForm);
+  //    console.log('  ==============',body,'   ',body.get('name'),'   ',body.get('description'));
+  const name = body.get('name');
+  const description = body.get('description');
+  const sendObject =
+    'name=' +
+    encodeURIComponent(name) +
+    '&description=' +
+    encodeURIComponent(description) +
+    '&status=' +
+    encodeURIComponent(false);
+  //    console.log('Update form ===',sendObject);
+  xhr_edit.onreadystatechange = () => {
+    if (xhr_edit.readyState !== 4) return null;
+  };
+  xhr_edit.open(
+    'PATCH',
+    `http://localhost:7070?method=editTicket&id=${id_edit}`
+  );
+  xhr_edit.setRequestHeader(
+    'Content-type',
+    'application/x-www-form-urlencoded'
+  );
+  xhr_edit.send(sendObject);
+  //    getTasks();
+  modalEdit.style.display = 'none';
+  body.delete('name');
+  body.delete('description');
+  updateForm.reset();
+  //	updateForm.removeEventListener('submit', updatehandler);
+  return null;
+});
 
 closeBtnModalAdd.addEventListener('click', () => {
   //  console.log('close');
@@ -76,7 +121,7 @@ subscribeForm.addEventListener('submit', (e) => {
   body.delete('name');
   body.delete('description');
   subscribeForm.reset();
-//  getTasks();
+  //  getTasks();
 });
 
 function addItemFunctionality() {
@@ -130,11 +175,13 @@ function addDascription(element, id) {
       //      console.log('ответ', xhr.responseText);
       try {
         const data = JSON.parse(xhr.responseText);
-        //        console.log('descriotion', data.ticket.description);
-        element.textContent = data.ticket.description;
+        // console.log('descriotion', data.ticket.description);
+        // element.textContent = data.ticket.description;
+        element.value = data.ticket.description;
+        // modalEdit.description.value = data.ticket.description;
         element.classList.toggle('toggle');
       } catch (err) {
-        //        console.error(err);
+        // console.error(err);
       }
     }
   });
@@ -162,7 +209,7 @@ function deleteTask(id) {
       );
       xhr.send();
       modalDelete.style.display = 'none';
-//      getTasks();
+      //      getTasks();
     }
   });
 }
@@ -191,24 +238,23 @@ function getTasks() {
 }
 
 function editTask(id) {
-  const updateForm = document.querySelector('.update-form');
   modalEdit.style.display = 'flex';
   const inputName = modalEdit.querySelector('.name');
   const inputDescription = modalEdit.querySelector('.text');
   const editBtn = modalEdit.querySelector('.save');
-  const closeBtn = modalEdit.querySelector('.cansel');
+  id_edit = id;
 
   //  console.log(editBtn, closeBtn);
   //  console.log('inputs', inputName, inputDescription);
+  //    console.log('inputs values ', inputName.value, inputDescription.value);
 
-  const xhr = new XMLHttpRequest();
-  xhr.open('GET', `http://localhost:7070?method=ticketById&id=${id}`);
-  xhr.send();
-  xhr.addEventListener('load', () => {
-    if (xhr.status >= 200 && xhr.status < 300) {
-      //      console.log('ответ', xhr.responseText);
+  xhr_edit.open('GET', `http://localhost:7070?method=ticketById&id=${id_edit}`);
+  xhr_edit.send();
+  xhr_edit.addEventListener('load', () => {
+    if (xhr_edit.status >= 200 && xhr_edit.status < 300) {
+      //      console.log('ответ', xhr_edit.responseText);
       try {
-        const data = JSON.parse(xhr.responseText);
+        const data = JSON.parse(xhr_edit.responseText);
         //        console.log('descriotion', data.ticket.description);
         inputName.value = data.ticket.name;
         inputDescription.value = data.ticket.description;
@@ -216,38 +262,5 @@ function editTask(id) {
         console.error(err);
       }
     }
-  });
-
-  closeBtn.addEventListener('click', () => {
-    //    console.log('close');
-    modalEdit.style.display = 'none';
-  });
-
-  updateForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const body = new FormData(updateForm);
-//    console.log('  ==============',body);
-    const name = body.get('name');
-    const description = body.get('description');
-    const sendObject =
-      'name=' +
-      encodeURIComponent(name) +
-      '&description=' +
-      encodeURIComponent(description) +
-      '&status=' +
-      encodeURIComponent(false);
-//    console.log('Update form ===',sendObject);
-    xhr.onreadystatechange = () => {
-      if (xhr.readyState !== 4) return null;
-    };
-    xhr.open('PATCH', `http://localhost:7070?method=editTicket&id=${id}`);
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send(sendObject);
-//    getTasks();
-    modalEdit.style.display = 'none';
-    body.delete('name');
-    body.delete('description');
-    updateForm.reset();
-    return null;
   });
 }
