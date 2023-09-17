@@ -76,7 +76,7 @@ subscribeForm.addEventListener('submit', (e) => {
   body.delete('name');
   body.delete('description');
   subscribeForm.reset();
-  getTasks();
+//  getTasks();
 });
 
 function addItemFunctionality() {
@@ -162,7 +162,7 @@ function deleteTask(id) {
       );
       xhr.send();
       modalDelete.style.display = 'none';
-      getTasks();
+//      getTasks();
     }
   });
 }
@@ -226,7 +226,7 @@ function editTask(id) {
   updateForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const body = new FormData(updateForm);
-
+//    console.log('  ==============',body);
     const name = body.get('name');
     const description = body.get('description');
     const sendObject =
@@ -236,14 +236,14 @@ function editTask(id) {
       encodeURIComponent(description) +
       '&status=' +
       encodeURIComponent(false);
-    //    console.log(sendObject);
+//    console.log('Update form ===',sendObject);
     xhr.onreadystatechange = () => {
       if (xhr.readyState !== 4) return null;
     };
     xhr.open('PATCH', `http://localhost:7070?method=editTicket&id=${id}`);
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhr.send(sendObject);
-    getTasks();
+//    getTasks();
     modalEdit.style.display = 'none';
     body.delete('name');
     body.delete('description');
