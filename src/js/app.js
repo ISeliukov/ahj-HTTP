@@ -176,8 +176,8 @@ function addDascription(element, id) {
       try {
         const data = JSON.parse(xhr.responseText);
         // console.log('descriotion', data.ticket.description);
-        // element.textContent = data.ticket.description;
-        element.value = data.ticket.description;
+        element.textContent = data.ticket.description;
+        // element.value = data.ticket.description;
         // modalEdit.description.value = data.ticket.description;
         element.classList.toggle('toggle');
       } catch (err) {
