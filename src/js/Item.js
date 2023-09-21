@@ -36,9 +36,9 @@ export default class Item {
     container.append(buttonBox);
     this.element.append(container);
 
-    const descriotion = document.createElement('div');
-    descriotion.classList.add('descriotion');
-    this.element.append(descriotion);
+    const description = document.createElement('div');
+    description.classList.add('description');
+    this.element.append(description);
 
     parent.append(this.element);
   }

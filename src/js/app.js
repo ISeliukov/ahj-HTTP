@@ -24,6 +24,10 @@ const modalDelete = document.querySelector('.modal_delete');
 const modalEdit = document.querySelector('.modal_edit');
 //console.log('modalEdit', modalEdit);
 
+let curCheck = false;
+let changeStat = false;
+let retStat = false;
+
 const closeBtn = modalEdit.querySelector('.cansel');
 closeBtn.addEventListener('click', () => {
   //    console.log('close');
@@ -36,6 +40,26 @@ const closeBtnModalAdd = document.querySelector('.close');
 const xhr_edit = new XMLHttpRequest();
 let id_edit = 0;
 
+function updateTicket(id, name, description, stat) {
+  const sendObject =
+    'name=' +
+    encodeURIComponent(name) +
+    '&description=' +
+    encodeURIComponent(description) +
+    '&status=' +
+    encodeURIComponent(stat);
+
+  xhr_edit.onreadystatechange = () => {
+    if (xhr_edit.readyState !== 4) return null;
+  };
+  xhr_edit.open('PATCH', `http://localhost:7070?method=editTicket&id=${id}`);
+  xhr_edit.setRequestHeader(
+    'Content-type',
+    'application/x-www-form-urlencoded'
+  );
+  xhr_edit.send(sendObject);
+}
+
 const updateForm = document.querySelector('.update-form');
 const updatehandler = updateForm.addEventListener('submit', (e) => {
   e.preventDefault();
@@ -43,26 +67,8 @@ const updatehandler = updateForm.addEventListener('submit', (e) => {
   //    console.log('  ==============',body,'   ',body.get('name'),'   ',body.get('description'));
   const name = body.get('name');
   const description = body.get('description');
-  const sendObject =
-    'name=' +
-    encodeURIComponent(name) +
-    '&description=' +
-    encodeURIComponent(description) +
-    '&status=' +
-    encodeURIComponent(false);
-  //    console.log('Update form ===',sendObject);
-  xhr_edit.onreadystatechange = () => {
-    if (xhr_edit.readyState !== 4) return null;
-  };
-  xhr_edit.open(
-    'PATCH',
-    `http://localhost:7070?method=editTicket&id=${id_edit}`
-  );
-  xhr_edit.setRequestHeader(
-    'Content-type',
-    'application/x-www-form-urlencoded'
-  );
-  xhr_edit.send(sendObject);
+
+  updateTicket(id_edit, name, description, retStat);
   //    getTasks();
   modalEdit.style.display = 'none';
   body.delete('name');
@@ -85,6 +91,7 @@ addBtn.addEventListener('click', () => {
 function render(listList) {
   //  console.log('render');
   listList.map((item) => {
+    //console.log(' ===item', item);
     const element = new Item(item);
     //    console.log('element', element);
     element.pushItem(list);
@@ -133,34 +140,51 @@ function addItemFunctionality() {
     const id = element.getAttribute('id');
     const btnEdit = element.querySelector('.edit');
     const btnCheckbox = element.querySelector('.checkbox');
+
     const btnDelete = element.querySelector('.delete');
     //    console.log('btnBtn', btnDelete);
 
-    btnCheckbox.addEventListener('click', () => {
-      btnCheckbox.classList.toggle('true');
+    const description = element.querySelector('.description');
+
+    btnCheckbox.addEventListener('click', (e) => {
+      let btnCheck1 = e.currentTarget;
+      if (btnCheck1.classList.contains('false')) {
+        btnCheck1.classList.add('true');
+        btnCheck1.classList.remove('false');
+      } else {
+        btnCheck1.classList.add('false');
+        btnCheck1.classList.remove('true');
+      }
+      let curCheck = btnCheck1.classList.contains('true');
+      let id = e.currentTarget.parentNode.parentNode.id;
+      changeStatus(id, curCheck);
+      description.classList.add('toggle');
     });
 
     btnDelete.addEventListener('click', () => {
+      description.classList.add('toggle');
       deleteTask(id);
     });
 
     btnEdit.addEventListener('click', (e) => {
       e.preventDefault();
+      description.classList.add('toggle');
+      let check1 =
+        e.currentTarget.parentNode.parentNode.querySelector('.checkbox');
+      check1 = check1.classList.contains('true');
       editTask(id);
     });
 
     element.addEventListener('click', () => {
-      //      console.log('descriotion click');
-      const descriotion = element.querySelector('.descriotion');
-      if (!descriotion.classList.contains('toggle')) {
+      if (!description.classList.contains('toggle')) {
         //        console.log('!TOGGLE');
-        descriotion.style.display = 'flex';
-        addDascription(descriotion, id);
+        description.style.display = 'flex';
+        addDascription(description, id);
       } else {
         //        console.log('TOGGLE');
-        descriotion.style.display = 'none';
-        descriotion.textContent = '';
-        descriotion.classList.toggle('toggle');
+        description.style.display = 'none';
+        description.textContent = '';
+        description.classList.remove('toggle');
       }
     });
   }
@@ -175,11 +199,30 @@ function addDascription(element, id) {
       //      console.log('ответ', xhr.responseText);
       try {
         const data = JSON.parse(xhr.responseText);
-        // console.log('descriotion', data.ticket.description);
+        // console.log('description', data.ticket.description);
         element.textContent = data.ticket.description;
         // element.value = data.ticket.description;
         // modalEdit.description.value = data.ticket.description;
-        element.classList.toggle('toggle');
+        element.classList.add('toggle');
+      } catch (err) {
+        // console.error(err);
+      }
+    }
+  });
+}
+
+function changeStatus(id, stat) {
+  //  console.log('  ====stat',stat);
+  changeStat = stat;
+  const xhr = new XMLHttpRequest();
+  xhr.open('GET', `http://localhost:7070?method=ticketById&id=${id}`);
+  xhr.send();
+  xhr.addEventListener('load', () => {
+    if (xhr.status >= 200 && xhr.status < 300) {
+      //      console.log('ответ', xhr.responseText);
+      try {
+        const data = JSON.parse(xhr.responseText);
+        updateTicket(id, data.ticket.name, data.ticket.description, changeStat);
       } catch (err) {
         // console.error(err);
       }
@@ -244,10 +287,6 @@ function editTask(id) {
   const editBtn = modalEdit.querySelector('.save');
   id_edit = id;
 
-  //  console.log(editBtn, closeBtn);
-  //  console.log('inputs', inputName, inputDescription);
-  //    console.log('inputs values ', inputName.value, inputDescription.value);
-
   xhr_edit.open('GET', `http://localhost:7070?method=ticketById&id=${id_edit}`);
   xhr_edit.send();
   xhr_edit.addEventListener('load', () => {
@@ -255,9 +294,11 @@ function editTask(id) {
       //      console.log('ответ', xhr_edit.responseText);
       try {
         const data = JSON.parse(xhr_edit.responseText);
-        //        console.log('descriotion', data.ticket.description);
+        //        console.log('description', data.ticket.description);
         inputName.value = data.ticket.name;
         inputDescription.value = data.ticket.description;
+        retStat = data.ticket.status;
+        //console.log(' === status ',data.ticket.status);
       } catch (err) {
         console.error(err);
       }
